@@ -16,10 +16,12 @@ type Terrain struct {
 }
 
 func main() {
+	terrain := initialise()    // Constructs a terrain instance
+	world := generate(terrain) // Fills out the world array
+	draw(world, terrain)       // Draws the world array
+}
 
-	// Constructs a terrain instance
-	terrain := initialise()
-
+func generate(terrain *Terrain) [][]int32 {
 	log.Println("Generating world.")
 	// Generate the 2d slice of sizeY rows, and sizeX columns
 	// Traverse the 2D array and set random numbers
@@ -31,12 +33,7 @@ func main() {
 			world[y][x] = rand.Int31n(100)
 		}
 	}
-
-	draw(world, terrain)
-}
-
-func generate() {
-
+	return world
 }
 
 // draw should print the world to the console.
