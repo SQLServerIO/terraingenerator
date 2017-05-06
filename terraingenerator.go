@@ -1,14 +1,14 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
 )
 
-// Terrain is the world
+// Terrain is just the world meta? data
 type Terrain struct {
 	Name  string
 	SizeX int
@@ -16,11 +16,11 @@ type Terrain struct {
 }
 
 func main() {
-	fmt.Println("Init.")
 
 	// Constructs a terrain instance
 	terrain := initialise()
 
+	log.Println("Generating world.")
 	// Generate the 2d slice of sizeY rows, and sizeX columns
 	world := make([][]int32, terrain.SizeY)
 	for y := 0; y < terrain.SizeY; y++ {
@@ -28,30 +28,31 @@ func main() {
 	}
 
 	// Traverse the 2D array and set random numbers
+	// Confused by the X,Y coordinates. Rows are Y. Columns X.
 	for y := 0; y < terrain.SizeY; y++ {
 		for x := 0; x < terrain.SizeX; x++ {
 			c := rand.Int31n(100)
 			world[y][x] = c
 		}
 	}
-
-	fmt.Println("Generate.")
-	fmt.Println("Draw.")
-	fmt.Println(terrain)
-	fmt.Println(world)
+	draw(world, terrain)
 }
 
 func generate() {
 
 }
 
-func draw() {
-
+// draw should print the world to the console.
+func draw(world [][]int32, terrain *Terrain) {
+	log.Println("Drawing world.")
+	for y := 0; y < terrain.SizeY; y++ {
+		log.Println(world[y])
+	}
 }
 
 // initialise returns an instance of Terrain
 func initialise() *Terrain {
-	fmt.Println("Initialising.")
+	log.Println("Initialising.")
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Get the input from the command line.
