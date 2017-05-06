@@ -18,7 +18,41 @@ type Terrain struct {
 func main() {
 	fmt.Println("Init.")
 
-	initialise()
+	// Constructs a terrain instance
+	terrain := initialise()
+
+	// Generate the 2d slice of sizeY rows, and sizeX columns
+	world := make([][]int32, terrain.SizeY)
+	for y := 0; y < terrain.SizeY; y++ {
+		world[y] = make([]int32, terrain.SizeX)
+	}
+
+	// Traverse the 2D array and set random numbers
+	for y := 0; y < terrain.SizeY; y++ {
+		for x := 0; x < terrain.SizeX; x++ {
+			c := rand.Int31n(100)
+			world[y][x] = c
+		}
+	}
+
+	fmt.Println("Generate.")
+	fmt.Println("Draw.")
+	fmt.Println(terrain)
+	fmt.Println(world)
+}
+
+func generate() {
+
+}
+
+func draw() {
+
+}
+
+// initialise returns an instance of Terrain
+func initialise() *Terrain {
+	fmt.Println("Initialising.")
+	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Get the input from the command line.
 	var name = os.Args[1]
@@ -32,46 +66,6 @@ func main() {
 		panic(err)
 	}
 
-	// Construct a terrain instance
-	terrain := NewTerrain(name, sizeX, sizeY)
-	var x = terrain.SizeX
-	var y = terrain.SizeY
-
-	// Generate the 2d slice of sizeX sizeY
-	world := make([][]int32, y)
-	for i := 0; i < y; i++ {
-		world[i] = make([]int32, x)
-	}
-
-	// Traverse the 2D array and set random numbers
-	for i := 0; i < y; i++ {
-		for j := 0; j < x; j++ {
-			c := rand.Int31n(100)
-			world[i][j] = c
-		}
-	}
-
-	fmt.Println("Generate.")
-	fmt.Println("Draw.")
-	fmt.Println(terrain)
-	fmt.Println(world)
-}
-
-func initialise() {
-	fmt.Println("Initialising.")
-	rand.Seed(time.Now().UTC().UnixNano())
-}
-
-func generate() {
-
-}
-
-func draw() {
-
-}
-
-// NewTerrain returns an instance of Terrain
-func NewTerrain(name string, sizeX int, sizeY int) *Terrain {
 	return &Terrain{
 		Name:  name,
 		SizeX: sizeX,
