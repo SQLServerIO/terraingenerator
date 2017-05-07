@@ -16,28 +16,36 @@ type Terrain struct {
 }
 
 func main() {
-	terrain := initialise()    // Constructs a terrain instance
-	world := generate(terrain) // Fills out the world array
-	draw(world, terrain)       // Draws the world array
+	TerrainTypes := map[int]string{
+		0: "Land",
+		1: "Land",
+		2: "Mountain",
+		3: "Water",
+		4: "water",
+	}
+	terrain := initialise()                  // Constructs a terrain instance
+	world := generate(terrain, TerrainTypes) // Fills out the world array
+	draw(world, terrain)                     // Draws the world array
 }
 
-func generate(terrain *Terrain) [][]int32 {
+func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
 	log.Println("Generating world.")
+
 	// Generate the 2d slice of sizeY rows, and sizeX columns
 	// Traverse the 2D array and set random numbers
 	// Confused by the X,Y coordinates? Rows are Y. Columns X
-	world := make([][]int32, terrain.SizeY)
+	world := make([][]int, terrain.SizeY)
 	for y := 0; y < terrain.SizeY; y++ {
-		world[y] = make([]int32, terrain.SizeX)
+		world[y] = make([]int, terrain.SizeX)
 		for x := 0; x < terrain.SizeX; x++ {
-			world[y][x] = rand.Int31n(100)
+			world[y][x] = rand.Intn(len(terrainTypes)) // Sets each element to one of the terrain types.
 		}
 	}
 	return world
 }
 
 // draw should print the world to the console.
-func draw(world [][]int32, terrain *Terrain) {
+func draw(world [][]int, terrain *Terrain) {
 	log.Println("Drawing world.")
 	for y := 0; y < terrain.SizeY; y++ {
 		log.Println(world[y])
