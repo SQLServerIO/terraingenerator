@@ -80,3 +80,8 @@ func initialise() *Terrain {
 		SizeY: sizeY,
 	}
 }
+
+// Polygon draws a simple polygon. Current a Square
+func Polygon(n int) []Point {
+	return result
+}
