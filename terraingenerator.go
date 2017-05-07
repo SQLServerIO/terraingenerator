@@ -10,13 +10,16 @@ import (
 	"github.com/fogleman/gg"
 )
 
-// Terrain is just the world meta? data
+// Terrain is just the world metadata
 type Terrain struct {
-	Name         string
-	SizeX        int
-	SizeY        int
-	TerrainTypes map[int]string
+	Name          string
+	SizeX         int
+	SizeY         int
+	NumberOfPeaks int
+	TerrainTypes  map[string]int
 }
+
+var threadCounter = 0
 
 func main() {
 	defer timeTrack(time.Now(), "main")
@@ -33,17 +36,37 @@ func generate(terrain *Terrain) [][]int {
 	// Generate the 2d slice of sizeY rows, and sizeX columns
 	// Traverse the 2D array and set random numbers
 	// Confused by the X,Y coordinates? Rows are Y. Columns X
+
+	// Generates the 2d slice.
 	world := make([][]int, terrain.SizeY)
 	for y := 0; y < terrain.SizeY; y++ {
 		world[y] = make([]int, terrain.SizeX)
-		for x := 0; x < terrain.SizeX; x++ {
-			world[y][x] = rand.Intn(len(terrain.TerrainTypes)) // Sets each element to one of the terrain types.
-		}
+	}
+
+	//
+	//	for x := 0; x < terrain.SizeX; x++ {
+	//		world[y][x] = rand.Intn(len(terrain.TerrainTypes)) // Sets each element to one of the terrain types.
+	//	}
+	//}
+	// Generate a go thread for the number of peaks
+	for i := 0; i < terrain.NumberOfPeaks; i++ {
+		threadCounter = 0
+		go generatePeaks(&world, terrain)
 	}
 	return world
 }
 
-// draw should print the world to the console.
+// generateMountains generates a random number of mountain peaks for the map.
+func generatePeaks(world *[][]int, terrain *Terrain) {
+	threadCounter++
+	defer timeTrack(time.Now(), strconv.Itoa(threadCounter))
+	x := rand.Intn(terrain.SizeX)
+	y := rand.Intn(terrain.SizeY)
+	// Deference world, and set the type to mountain.
+	(*world)[y][x] = terrain.TerrainTypes["Mountain"]
+}
+
+// draw outputs the terrain to a .png file.
 func draw(world [][]int, terrain *Terrain) {
 	defer timeTrack(time.Now(), "draw")
 	log.Println("Drawing world.")
@@ -94,17 +117,22 @@ func initialise() *Terrain {
 	if err != nil {
 		panic(err)
 	}
+	numberOfPeaks, err := strconv.Atoi(os.Args[4]) // How to default to 1? numberOfPeaks = 1
+	if err != nil {
+		panic(err)
+	}
 
 	return &Terrain{
-		Name:  name,
-		SizeX: sizeX,
-		SizeY: sizeY,
-		TerrainTypes: map[int]string{
-			0: "Water",
-			1: "Water",
-			2: "Water",
-			3: "Field",
-			4: "Mountain",
+		Name:          name,
+		SizeX:         sizeX,
+		SizeY:         sizeY,
+		NumberOfPeaks: numberOfPeaks,
+		TerrainTypes: map[string]int{
+			"Water":    0,
+			"Water1":   1,
+			"Field":    2,
+			"Field1":   3,
+			"Mountain": 4,
 		},
 	}
 }
