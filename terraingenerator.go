@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -19,6 +18,7 @@ type Terrain struct {
 }
 
 func main() {
+	defer timeTrack(time.Now(), "main")
 	TerrainTypes := map[int]string{
 		0: "Water",
 		1: "Water",
@@ -33,6 +33,7 @@ func main() {
 }
 
 func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
+	defer timeTrack(time.Now(), "generate")
 	log.Println("Generating world.")
 
 	// Generate the 2d slice of sizeY rows, and sizeX columns
@@ -50,14 +51,11 @@ func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
 
 // draw should print the world to the console.
 func draw(world [][]int, terrain *Terrain) {
+	defer timeTrack(time.Now(), "draw")
 	log.Println("Drawing world.")
-	for y := range world {
-		fmt.Println(world[y])
-	}
 	dc := gg.NewContext(800, 800)
 	for y := 0; y < terrain.SizeY; y++ {
 		for x := 0; x < terrain.SizeX; x++ {
-			fmt.Println(world[y][x])
 			dc.Push()
 			switch world[y][x] {
 			case 0: // water
@@ -87,6 +85,7 @@ func draw(world [][]int, terrain *Terrain) {
 
 // initialise returns an instance of Terrain
 func initialise() *Terrain {
+	defer timeTrack(time.Now(), "initialise")
 	log.Println("Initialising.")
 	rand.Seed(time.Now().UTC().UnixNano())
 
@@ -107,4 +106,10 @@ func initialise() *Terrain {
 		SizeX: sizeX,
 		SizeY: sizeY,
 	}
+}
+
+// timeTrack taken from stathat.com
+func timeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("function %s took %s", name, elapsed)
 }
