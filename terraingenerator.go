@@ -63,7 +63,31 @@ func generatePeaks(world *[][]int, terrain *Terrain) {
 	x := rand.Intn(terrain.SizeX)
 	y := rand.Intn(terrain.SizeY)
 	// Deference world, and set the type to mountain.
-	(*world)[y][x] = terrain.TerrainTypes["Mountain"]
+	(*world)[y][x] = terrain.TerrainTypes["Peak"] // sets the mountain peak
+	// surround peak with mountain, surround mountain with random mountains
+	if x-1 >= 0 {
+		if y-1 >= 0 {
+			(*world)[y-1][x-1] = terrain.TerrainTypes["Mountain"]
+		}
+
+		(*world)[y][x-1] = terrain.TerrainTypes["Mountain"]
+
+		if y+1 < terrain.SizeY {
+			(*world)[y+1][x-1] = terrain.TerrainTypes["Mountain"]
+		}
+	}
+	if x+1 < terrain.SizeX {
+		if y-1 >= 0 {
+			(*world)[y-1][x+1] = terrain.TerrainTypes["Mountain"]
+			(*world)[y-1][x] = terrain.TerrainTypes["Mountain"]
+		}
+		(*world)[y][x+1] = terrain.TerrainTypes["Mountain"]
+
+		if y+1 < terrain.SizeY {
+			(*world)[y+1][x+1] = terrain.TerrainTypes["Mountain"]
+			(*world)[y+1][x] = terrain.TerrainTypes["Mountain"]
+		}
+	}
 }
 
 // draw outputs the terrain to a .png file.
@@ -85,6 +109,8 @@ func draw(world [][]int, terrain *Terrain) {
 				dc.SetRGB255(10, 220, 10)
 			case 4: // mountain
 				dc.SetRGB255(60, 60, 60)
+			case 5: // Peak / Snow
+				dc.SetRGB255(240, 240, 240)
 			}
 			dc.DrawRectangle(float64(x*10), float64(y*10), 10.0, 10.0)
 			dc.Fill()
@@ -133,6 +159,7 @@ func initialise() *Terrain {
 			"Field":    2,
 			"Field1":   3,
 			"Mountain": 4,
+			"Peak":     5,
 		},
 	}
 }
