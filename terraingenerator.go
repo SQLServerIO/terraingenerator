@@ -17,12 +17,13 @@ type Terrain struct {
 
 func main() {
 	TerrainTypes := map[int]string{
-		0: "Land",
-		1: "Land",
-		2: "Mountain",
-		3: "Water",
-		4: "water",
+		0: "Water",
+		1: "Water",
+		2: "Field",
+		3: "Field",
+		4: "Mountain",
 	}
+
 	terrain := initialise()                  // Constructs a terrain instance
 	world := generate(terrain, TerrainTypes) // Fills out the world array
 	draw(world, terrain)                     // Draws the world array
@@ -47,7 +48,7 @@ func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
 // draw should print the world to the console.
 func draw(world [][]int, terrain *Terrain) {
 	log.Println("Drawing world.")
-	for y := 0; y < terrain.SizeY; y++ {
+	for y := range world {
 		log.Println(world[y])
 	}
 }
