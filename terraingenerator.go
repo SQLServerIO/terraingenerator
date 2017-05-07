@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -50,6 +51,9 @@ func draw(world [][]int, terrain *Terrain) {
 	log.Println("Drawing world.")
 	for y := range world {
 		log.Println(world[y])
+	}
+	for y := range world {
+		fmt.Println(world[y])
 	}
 }
 
