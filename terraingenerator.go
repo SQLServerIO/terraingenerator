@@ -24,33 +24,24 @@ var threadCounter = 0
 func main() {
 	defer timeTrack(time.Now(), "main")
 
-	terrain := initialise()    // Constructs a terrain instance
-	world := generate(terrain) // Fills out the world array
-	draw(world, terrain)       // Draws the world array
+	terrain := initialise()    // Constructs a terrain instance. Gets all the command line arguments, etc.
+	world := generate(terrain) // Generates the world terrain.
+	draw(world, terrain)       // Draws the world array and outputs to .png
 }
 
 func generate(terrain *Terrain) [][]int {
 	defer timeTrack(time.Now(), "generate")
 	log.Println("Generating world.")
 
-	// Generate the 2d slice of sizeY rows, and sizeX columns
-	// Traverse the 2D array and set random numbers
-	// Confused by the X,Y coordinates? Rows are Y. Columns X
-
-	// Generates the 2d slice.
+	// Generates the 2d slice of sizeY rows, and sizeX columns
 	world := make([][]int, terrain.SizeY)
 	for y := 0; y < terrain.SizeY; y++ {
 		world[y] = make([]int, terrain.SizeX)
 	}
-
-	//
-	//	for x := 0; x < terrain.SizeX; x++ {
-	//		world[y][x] = rand.Intn(len(terrain.TerrainTypes)) // Sets each element to one of the terrain types.
-	//	}
-	//}
+	threadCounter = 0
 	// Generate a go thread for the number of peaks
 	for i := 0; i < terrain.NumberOfPeaks; i++ {
-		threadCounter = 0
+
 		go generatePeaks(&world, terrain)
 	}
 	return world
@@ -64,7 +55,7 @@ func generatePeaks(world *[][]int, terrain *Terrain) {
 	y := rand.Intn(terrain.SizeY)
 	// Deference world, and set the type to mountain.
 	(*world)[y][x] = terrain.TerrainTypes["Peak"] // sets the mountain peak
-	// surround peak with mountain, surround mountain with random mountains
+	// surround peak with mountain, also surround mountain with random mountains
 	if x-1 >= 0 {
 		if y-1 >= 0 {
 			(*world)[y-1][x-1] = terrain.TerrainTypes["Mountain"]
@@ -79,7 +70,6 @@ func generatePeaks(world *[][]int, terrain *Terrain) {
 	if x+1 < terrain.SizeX {
 		if y-1 >= 0 {
 			(*world)[y-1][x+1] = terrain.TerrainTypes["Mountain"]
-			(*world)[y-1][x] = terrain.TerrainTypes["Mountain"]
 		}
 		(*world)[y][x+1] = terrain.TerrainTypes["Mountain"]
 
@@ -88,6 +78,13 @@ func generatePeaks(world *[][]int, terrain *Terrain) {
 			(*world)[y+1][x] = terrain.TerrainTypes["Mountain"]
 		}
 	}
+	if y-1 >= 0 {
+		(*world)[y-1][x] = terrain.TerrainTypes["Mountain"]
+	}
+	if y+1 < terrain.SizeY {
+		(*world)[y+1][x] = terrain.TerrainTypes["Mountain"]
+	}
+
 }
 
 // draw outputs the terrain to a .png file.
@@ -154,12 +151,12 @@ func initialise() *Terrain {
 		SizeY:         sizeY,
 		NumberOfPeaks: numberOfPeaks,
 		TerrainTypes: map[string]int{
-			"Water":    0,
-			"Water1":   1,
-			"Field":    2,
-			"Field1":   3,
-			"Mountain": 4,
-			"Peak":     5,
+			"DeepWater":    0,
+			"ShallowWater": 1,
+			"FieldLow":     2,
+			"FieldHigh":    3,
+			"Mountain":     4,
+			"Peak":         5,
 		},
 	}
 }
