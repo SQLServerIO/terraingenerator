@@ -12,27 +12,21 @@ import (
 
 // Terrain is just the world meta? data
 type Terrain struct {
-	Name  string
-	SizeX int
-	SizeY int
+	Name         string
+	SizeX        int
+	SizeY        int
+	TerrainTypes map[int]string
 }
 
 func main() {
 	defer timeTrack(time.Now(), "main")
-	TerrainTypes := map[int]string{
-		0: "Water",
-		1: "Water",
-		2: "Field",
-		3: "Field",
-		4: "Mountain",
-	}
 
-	terrain := initialise()                  // Constructs a terrain instance
-	world := generate(terrain, TerrainTypes) // Fills out the world array
-	draw(world, terrain)                     // Draws the world array
+	terrain := initialise()    // Constructs a terrain instance
+	world := generate(terrain) // Fills out the world array
+	draw(world, terrain)       // Draws the world array
 }
 
-func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
+func generate(terrain *Terrain) [][]int {
 	defer timeTrack(time.Now(), "generate")
 	log.Println("Generating world.")
 
@@ -43,7 +37,7 @@ func generate(terrain *Terrain, terrainTypes map[int]string) [][]int {
 	for y := 0; y < terrain.SizeY; y++ {
 		world[y] = make([]int, terrain.SizeX)
 		for x := 0; x < terrain.SizeX; x++ {
-			world[y][x] = rand.Intn(len(terrainTypes)) // Sets each element to one of the terrain types.
+			world[y][x] = rand.Intn(len(terrain.TerrainTypes)) // Sets each element to one of the terrain types.
 		}
 	}
 	return world
@@ -105,6 +99,13 @@ func initialise() *Terrain {
 		Name:  name,
 		SizeX: sizeX,
 		SizeY: sizeY,
+		TerrainTypes: map[int]string{
+			0: "Water",
+			1: "Water",
+			2: "Water",
+			3: "Field",
+			4: "Mountain",
+		},
 	}
 }
 
