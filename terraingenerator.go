@@ -1,14 +1,21 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/fogleman/gg"
 )
+
+// Vertex represents a point in the terrain.
+type Vertex struct {
+	X, Y int
+}
 
 // Terrain is just the world metadata
 type Terrain struct {
@@ -17,9 +24,11 @@ type Terrain struct {
 	SizeY         int
 	NumberOfPeaks int
 	TerrainTypes  map[string]int
+	PeakLocations []Vertex
 }
 
 var threadCounter = 0
+var waitGroup sync.WaitGroup
 
 func main() {
 	defer timeTrack(time.Now(), "main")
@@ -38,51 +47,56 @@ func generate(terrain *Terrain) [][]int {
 	for y := 0; y < terrain.SizeY; y++ {
 		world[y] = make([]int, terrain.SizeX)
 	}
-	threadCounter = 0
+	waitGroup.Add(terrain.NumberOfPeaks)
 	// Generate a go thread for the number of peaks
 	for i := 0; i < terrain.NumberOfPeaks; i++ {
-
 		go generatePeaks(&world, terrain)
 	}
+	waitGroup.Wait()
 	return world
 }
 
 // generateMountains generates a random number of mountain peaks for the map.
 func generatePeaks(world *[][]int, terrain *Terrain) {
 	threadCounter++
+	defer waitGroup.Done()
 	defer timeTrack(time.Now(), strconv.Itoa(threadCounter))
 	x := rand.Intn(terrain.SizeX)
 	y := rand.Intn(terrain.SizeY)
 	// Deference world, and set the type to mountain.
 	(*world)[y][x] = terrain.TerrainTypes["Peak"] // sets the mountain peak
+	// Capture all of the peak locations.
+	terrain.PeakLocations = append(terrain.PeakLocations, Vertex{X: x, Y: y})
+
 	// surround peak with mountain, also surround mountain with random mountains
 	if x-1 >= 0 {
 		if y-1 >= 0 {
-			(*world)[y-1][x-1] = terrain.TerrainTypes["Mountain"]
+			setTerrain(world, x-1, y-1, terrain.TerrainTypes["Mountain"])
 		}
 
-		(*world)[y][x-1] = terrain.TerrainTypes["Mountain"]
+		setTerrain(world, x-1, y, terrain.TerrainTypes["Mountain"])
 
 		if y+1 < terrain.SizeY {
-			(*world)[y+1][x-1] = terrain.TerrainTypes["Mountain"]
+			setTerrain(world, x-1, y+1, terrain.TerrainTypes["Mountain"])
 		}
 	}
 	if x+1 < terrain.SizeX {
 		if y-1 >= 0 {
-			(*world)[y-1][x+1] = terrain.TerrainTypes["Mountain"]
+			setTerrain(world, x+1, y-1, terrain.TerrainTypes["Mountain"])
 		}
 		(*world)[y][x+1] = terrain.TerrainTypes["Mountain"]
 
 		if y+1 < terrain.SizeY {
-			(*world)[y+1][x+1] = terrain.TerrainTypes["Mountain"]
-			(*world)[y+1][x] = terrain.TerrainTypes["Mountain"]
+			setTerrain(world, x+1, y+1, terrain.TerrainTypes["Mountain"])
+			setTerrain(world, x, y+1, terrain.TerrainTypes["Mountain"])
 		}
 	}
 	if y-1 >= 0 {
-		(*world)[y-1][x] = terrain.TerrainTypes["Mountain"]
+		setTerrain(world, x, y-1, terrain.TerrainTypes["Mountain"])
 	}
 	if y+1 < terrain.SizeY {
-		(*world)[y+1][x] = terrain.TerrainTypes["Mountain"]
+		setTerrain(world, x, y+1, terrain.TerrainTypes["Mountain"])
+
 	}
 
 }
@@ -112,15 +126,15 @@ func draw(world [][]int, terrain *Terrain) {
 			dc.DrawRectangle(float64(x*10), float64(y*10), 10.0, 10.0)
 			dc.Fill()
 			dc.Pop()
-
 		}
 	}
-	t := time.Now()
-	f := t.String()
-	filename := "output/" + f + ".png"
-	log.Println(filename)
-	dc.SavePNG(filename)
 
+	t := time.Now().Format("240405")
+	filename := "output/" + t + ".png"
+	log.Println(filename)
+	// writing a file takes about 20ms
+	dc.SavePNG(filename)
+	fmt.Println(terrain)
 }
 
 // initialise returns an instance of Terrain
@@ -159,6 +173,15 @@ func initialise() *Terrain {
 			"Peak":         5,
 		},
 	}
+}
+
+func formMountain() {
+
+}
+
+// setTerrain sets the Y,X coordinate terrain type.
+func setTerrain(world *[][]int, x, y, terrainType int) {
+	(*world)[y][x] = terrainType
 }
 
 // timeTrack taken from stathat.com
