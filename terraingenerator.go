@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"runtime"
+
 	"github.com/fogleman/gg"
 )
 
@@ -32,7 +34,7 @@ var waitGroup sync.WaitGroup
 
 func main() {
 	defer timeTrack(time.Now(), "main")
-
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	var chart Chart
 	chart.initialise() // Constructs a terrain instance. Gets all the command line arguments, etc.
 	chart.generate()   // Generates the world terrain.
@@ -111,7 +113,6 @@ func (c *Chart) draw() {
 	t := time.Now().Format("240405")
 	filename := "output/" + t + ".png"
 	log.Println(filename)
-	// writing a file takes about 20ms
 	dc.SavePNG(filename)
 }
 
