@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -17,14 +16,15 @@ type Vertex struct {
 	X, Y int
 }
 
-// Terrain is just the world metadata
-type Terrain struct {
+// Chart is the world's representation. Should multiple Charts make up a world?
+type Chart struct {
 	Name          string
 	SizeX         int
 	SizeY         int
 	NumberOfPeaks int
 	TerrainTypes  map[string]int
 	PeakLocations []Vertex
+	Graph         [][]int
 }
 
 var threadCounter = 0
@@ -33,62 +33,62 @@ var waitGroup sync.WaitGroup
 func main() {
 	defer timeTrack(time.Now(), "main")
 
-	terrain := initialise()    // Constructs a terrain instance. Gets all the command line arguments, etc.
-	world := generate(terrain) // Generates the world terrain.
-	draw(world, terrain)       // Draws the world array and outputs to .png
+	var chart Chart
+	chart.initialise() // Constructs a terrain instance. Gets all the command line arguments, etc.
+	chart.generate()   // Generates the world terrain.
+	chart.draw()       // Draws the world array and outputs to .png
 }
 
-func generate(terrain *Terrain) [][]int {
+func (c *Chart) generate() {
 	defer timeTrack(time.Now(), "generate")
 	log.Println("Generating world.")
 
 	// Generates the 2d slice of sizeY rows, and sizeX columns
-	world := make([][]int, terrain.SizeY)
-	for y := 0; y < terrain.SizeY; y++ {
-		world[y] = make([]int, terrain.SizeX)
+	c.Graph = make([][]int, c.SizeY)
+	for y := 0; y < c.SizeY; y++ {
+		c.Graph[y] = make([]int, c.SizeX)
 	}
-	waitGroup.Add(terrain.NumberOfPeaks)
+	waitGroup.Add(c.NumberOfPeaks)
 	// Generate a go thread for the number of peaks
-	for i := 0; i < terrain.NumberOfPeaks; i++ {
-		go generatePeaks(&world, terrain)
+	for i := 0; i < c.NumberOfPeaks; i++ {
+		go c.generatePeaks()
 	}
 	waitGroup.Wait()
-	return world
 }
 
 // generateMountains generates a random number of mountain peaks for the map.
-func generatePeaks(world *[][]int, terrain *Terrain) {
+func (c *Chart) generatePeaks() {
 	threadCounter++
 	defer waitGroup.Done()
 	defer timeTrack(time.Now(), strconv.Itoa(threadCounter))
-	x := rand.Intn(terrain.SizeX)
-	y := rand.Intn(terrain.SizeY)
+	x := rand.Intn(c.SizeX)
+	y := rand.Intn(c.SizeY)
 	// Deference world, and set the type to mountain.
-	(*world)[y][x] = terrain.TerrainTypes["Peak"] // sets the mountain peak
+	c.Graph[y][x] = c.TerrainTypes["Peak"] // sets the mountain peak
 	// Capture all of the peak locations.
-	terrain.PeakLocations = append(terrain.PeakLocations, Vertex{X: x, Y: y})
+	c.PeakLocations = append(c.PeakLocations, Vertex{X: x, Y: y})
 
-	// surround peak with mountain
-	setTerrain(world, x-1, y-1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x-1, y, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x-1, y+1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x+1, y-1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x+1, y, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x+1, y+1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x, y+1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
-	setTerrain(world, x, y-1, terrain.TerrainTypes["Mountain"], terrain.SizeX, terrain.SizeY)
+	// Surround peaks with mountains. This should be randomized in the future.
+	c.setTerrain(x-1, y-1, c.TerrainTypes["Mountain"])
+	c.setTerrain(x-1, y, c.TerrainTypes["Mountain"])
+	c.setTerrain(x-1, y+1, c.TerrainTypes["Mountain"])
+	c.setTerrain(x+1, y-1, c.TerrainTypes["Mountain"])
+	c.setTerrain(x+1, y, c.TerrainTypes["Mountain"])
+	c.setTerrain(x+1, y+1, c.TerrainTypes["Mountain"])
+	c.setTerrain(x, y+1, c.TerrainTypes["Mountain"])
+	c.setTerrain(x, y-1, c.TerrainTypes["Mountain"])
 
 }
 
 // draw outputs the terrain to a .png file.
-func draw(world [][]int, terrain *Terrain) {
+func (c *Chart) draw() {
 	defer timeTrack(time.Now(), "draw")
 	log.Println("Drawing world.")
 	dc := gg.NewContext(800, 800)
-	for y := 0; y < terrain.SizeY; y++ {
-		for x := 0; x < terrain.SizeX; x++ {
+	for y := 0; y < c.SizeY; y++ {
+		for x := 0; x < c.SizeX; x++ {
 			dc.Push()
-			switch world[y][x] {
+			switch c.Graph[y][x] {
 			case 0: // water
 				dc.SetRGB255(0, 0, 255)
 			case 1: // water
@@ -113,44 +113,38 @@ func draw(world [][]int, terrain *Terrain) {
 	log.Println(filename)
 	// writing a file takes about 20ms
 	dc.SavePNG(filename)
-	fmt.Println(terrain)
 }
 
 // initialise returns an instance of Terrain
-func initialise() *Terrain {
+func (c *Chart) initialise() {
+	var err error
 	defer timeTrack(time.Now(), "initialise")
 	log.Println("Initialising.")
 	rand.Seed(time.Now().UTC().UnixNano())
 
 	// Get the input from the command line.
-	var name = os.Args[1]
+	c.Name = os.Args[1]
 
-	sizeX, err := strconv.Atoi(os.Args[2])
+	c.SizeX, err = strconv.Atoi(os.Args[2])
 	if err != nil {
 		panic(err)
 	}
-	sizeY, err := strconv.Atoi(os.Args[3])
+	c.SizeY, err = strconv.Atoi(os.Args[3])
 	if err != nil {
 		panic(err)
 	}
-	numberOfPeaks, err := strconv.Atoi(os.Args[4]) // How to default to 1? numberOfPeaks = 1
+	c.NumberOfPeaks, err = strconv.Atoi(os.Args[4]) // How to default to 1? numberOfPeaks = 1
 	if err != nil {
 		panic(err)
 	}
 
-	return &Terrain{
-		Name:          name,
-		SizeX:         sizeX,
-		SizeY:         sizeY,
-		NumberOfPeaks: numberOfPeaks,
-		TerrainTypes: map[string]int{
-			"DeepWater":    0,
-			"ShallowWater": 1,
-			"FieldLow":     2,
-			"FieldHigh":    3,
-			"Mountain":     4,
-			"Peak":         5,
-		},
+	c.TerrainTypes = map[string]int{
+		"DeepWater":    0,
+		"ShallowWater": 1,
+		"FieldLow":     2,
+		"FieldHigh":    3,
+		"Mountain":     4,
+		"Peak":         5,
 	}
 }
 
@@ -159,10 +153,10 @@ func formMountain() {
 }
 
 // setTerrain sets the Y,X coordinate terrain type.
-func setTerrain(world *[][]int, x, y, terrainType, maxX, maxY int) {
+func (c *Chart) setTerrain(x, y, terrainType int) {
 	// Check that the coordinates are within the map boundaries.
-	if (y >= 0) && (y < maxY) && (x >= 0) && (x < maxX) {
-		(*world)[y][x] = terrainType
+	if (y >= 0) && (y < c.SizeY) && (x >= 0) && (x < c.SizeX) {
+		c.Graph[y][x] = terrainType
 	}
 }
 
